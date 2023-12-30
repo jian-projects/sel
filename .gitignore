@@ -1,6 +1,7 @@
 # big files
 checkpoints/
 datasets/
+records/
 saves/
 
 # Byte-compiled / optimized / DLL files
