@@ -1,2 +1,0 @@
-{"params": {"e": 10, "es": 10, "lr": 3e-05, "lr_pre": 3e-05, "bz": 32, "dr": 0.3, "seed": 4515}, "metric": {"stop": 4, "tv_mf1": 0.8282, "te_mf1": 0}}
-{"params": {"e": 10, "es": 10, "lr": 3e-05, "lr_pre": 3e-05, "bz": 32, "dr": 0.3, "seed": 3309}, "metric": {"stop": 4, "tv_mf1": 0.8099, "te_mf1": 0}}
