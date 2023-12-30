@@ -95,18 +95,18 @@ if __name__ == '__main__':
     args.train['early_stop'] = 10
     args.train['batch_size'] = 32
     args.train['save_model'] = False
-    args.train['log_step_rate'] = 1.0
+    args.train['log_step_rate'] = 10
     args.train['learning_rate'] = 3e-5
     args.train['learning_rate_pre'] = 3e-5
 
-    args.model['drop_rate'] = 0.3
+    args.model['drop_rate'] = 0.1
     args.train['do_test'] = 1
     args.train['inference'] = 0
     args.train['wandb'] = False
     args.train['show'] = 1
     
     args.model['scl'], args.model['seel'] = 1, 1
-    seeds = [2029+i for i in range(10)]
+    seeds = [2024+i for i in range(10)]
     ## Cycle Training
     if seeds: # 按指定 seed 执行
         recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"

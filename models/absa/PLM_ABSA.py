@@ -107,17 +107,21 @@ def import_model(args):
     
     ## 2. 导入数据
     data_path = args.file['data_dir'] + f"{args.train['tasks'][1]}/"
-    dataset = ABSADataset_PLM(data_path, lower=True)
-    dataset.tokenizer = AutoTokenizer.from_pretrained(args.model['plm'])
-    dataset.get_vector()
-    dataset.shuffle = {'train': True, 'valid': False, 'test': False}
-    for desc, data in dataset.datas['data'].items():
-        dataset.datas['data'][desc] = DataLoader_PLM(
-            dataset,
-            d_type='single',
-            desc=desc
-        )
-    dataset.task = 'cls'
+    if os.path.exists(f"{data_path}dataset.pt"):
+        dataset = torch.load(f"{data_path}dataset.pt")
+    else:
+        dataset = ABSADataset_PLM(data_path, lower=True)
+        dataset.tokenizer = AutoTokenizer.from_pretrained(args.model['plm'])
+        dataset.get_vector()
+        dataset.shuffle = {'train': True, 'valid': False, 'test': False}
+        for desc, data in dataset.datas['data'].items():
+            dataset.datas['data'][desc] = DataLoader_PLM(
+                dataset,
+                d_type='single',
+                desc=desc
+            )
+        dataset.task = 'cls'
+        torch.save(dataset, f"{data_path}dataset.pt")
 
     ## 3. 导入模型
     model = PLMForAbsa(

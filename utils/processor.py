@@ -132,7 +132,7 @@ class Processor():
             results_epoch.append(outs)
 
             # 过程展示
-            if self.global_step % log_step == 0:
+            if self.global_step % log_step == 0.1:
                 rec_valid = self._evaluate(stage='valid')
                 self.update_metric(epoch, rec_valid, stage='valid')
         
