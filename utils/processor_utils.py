@@ -229,11 +229,16 @@ class Metrics(object):
         self.valid['acc_ep'].append(rec_valid['accuracy'])
         self.valid['loss_ep'].append(rec_valid['loss_ce']) 
 
+        rec_test = processor._evaluate(stage='test')
+        self.test['f1_ep'].append(rec_test['macro_f1'])
+        self.test['acc_ep'].append(rec_test['accuracy'])
+        self.test['loss_ep'].append(rec_test['loss_ce']) 
+
     def on_train_start(self, processor=None):
         # 计算 初始模型性能
         rec_train = processor._evaluate(stage='train')
         rec_valid = processor._evaluate(stage='valid')
-        # rec_test  = processor._evaluate(stage='test') 
+        rec_test  = processor._evaluate(stage='test') 
 
         self.train['f1_ep'].append(rec_train['macro_f1'])
         self.train['acc_ep'].append(rec_train['accuracy'])
@@ -242,3 +247,7 @@ class Metrics(object):
         self.valid['f1_ep'].append(rec_valid['macro_f1'])
         self.valid['acc_ep'].append(rec_valid['accuracy'])
         self.valid['loss_ep'].append(rec_valid['loss_ce']) 
+
+        self.test['f1_ep'].append(rec_test['macro_f1'])
+        self.test['acc_ep'].append(rec_test['accuracy'])
+        self.test['loss_ep'].append(rec_test['loss_ce']) 
