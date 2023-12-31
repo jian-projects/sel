@@ -225,8 +225,8 @@ class Metrics(object):
         self.train['loss_ep'].append(processor.best_result['train']['loss_ce']) 
 
         rec_valid = processor._evaluate(stage='valid')
-        cur_epoch = len(self.train['loss_ep'])-1
-        processor.update_metric(cur_epoch, rec_valid, stage='valid')
+        # cur_epoch = len(self.train['loss_ep'])-1
+        # processor.update_metric(cur_epoch, rec_valid, stage='valid')
         self.valid['f1_ep'].append(rec_valid['macro_f1'])
         self.valid['acc_ep'].append(rec_valid['accuracy'])
         self.valid['loss_ep'].append(rec_valid['loss_ce']) 
@@ -235,7 +235,6 @@ class Metrics(object):
         # 计算 初始模型性能
         rec_train = processor._evaluate(stage='train')
         rec_valid = processor._evaluate(stage='valid')
-        rec_test  = processor._evaluate(stage='test') 
 
         self.train['f1_ep'].append(rec_train['macro_f1'])
         self.train['acc_ep'].append(rec_train['accuracy'])

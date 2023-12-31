@@ -107,8 +107,8 @@ def import_model(args):
     
     ## 2. 导入数据
     data_path = args.file['data_dir'] + f"{args.train['tasks'][1]}/"
-    if os.path.exists(f"{data_path}dataset.pt"):
-        dataset = torch.load(f"{data_path}dataset.pt")
+    if os.path.exists(f"{data_path}dataset-{args.model['plm'].split('/')[-1]}.pt"):
+        dataset = torch.load(f"{data_path}dataset-{args.model['plm'].split('/')[-1]}.pt")
     else:
         dataset = ABSADataset_PLM(data_path, lower=True)
         dataset.tokenizer = AutoTokenizer.from_pretrained(args.model['plm'])
@@ -121,7 +121,7 @@ def import_model(args):
                 desc=desc
             )
         dataset.task = 'cls'
-        torch.save(dataset, f"{data_path}dataset.pt")
+        torch.save(dataset, f"{data_path}dataset-{args.model['plm'].split('/')[-1]}.pt")
 
     ## 3. 导入模型
     model = PLMForAbsa(

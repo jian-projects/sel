@@ -5,7 +5,8 @@ from loguru import logger
 # 59.77.7.19
 PLM_DIR = '/home/Pretrained_Models/'
 DATA_DIR = './datasets/'
-SAVE_DIR = './checkpoints/'
+# SAVE_DIR = './checkpoints/'
+SAVE_DIR = '/home/Pretrained_Models/seel/'
 
 
 def log_show(desc, args=None):

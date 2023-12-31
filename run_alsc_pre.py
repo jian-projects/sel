@@ -85,27 +85,28 @@ if __name__ == '__main__':
         aclt: EMNLP 2021 (Bert_Based)
         cscl: our sota
     """
-    args = config(tasks=['absa','rest'], models=['seel_absa', 'plm'])
+    args = config(tasks=['absa','twi'], models=['seel_absa', 'plm'])
     # args = config(tasks=['absa','lap'], models=['memnet', None])
 
     ## Parameters Settings
     args.model['scale'] = 'base'
     
     args.train['epochs'] = 10
-    args.train['early_stop'] = 10
+    args.train['early_stop'] = 4
     args.train['batch_size'] = 32
     args.train['save_model'] = False
-    args.train['log_step_rate'] = 4.0
+    args.train['log_step_rate'] = 2.0
     args.train['learning_rate'] = 3e-5
     args.train['learning_rate_pre'] = 3e-5
 
     args.model['drop_rate'] = 0.3
     args.train['do_test'] = 0
-    args.train['inference'] = 1
+    args.train['inference'] = 0
     args.train['wandb'] = False
     args.train['show'] = 1
     
-    seeds = [2024+i for i in range(10)]
+    seeds = [50+i for i in range(100)]
+    seeds = []
     ## Cycle Training
     if seeds: # 按指定 seed 执行
         recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"
@@ -114,15 +115,15 @@ if __name__ == '__main__':
             args.train['seed'] = seed
             args.train['seed_change'] = False
 
+            # args.model['scl'], args.model['seel'] = 1, 1
+            # record = run(args)
+            # record_show.write(record, space=False) 
+
+            # args.model['scl'], args.model['seel'] = 1, 0
+            # record = run(args)
+            # record_show.write(record, space=False) 
+
             args.model['scl'], args.model['seel'] = 0, 0
-            record = run(args)
-            record_show.write(record, space=False) 
-
-            args.model['scl'], args.model['seel'] = 1, 0
-            record = run(args)
-            record_show.write(record, space=False) 
-
-            args.model['scl'], args.model['seel'] = 1, 1
             record = run(args)
             record_show.write(record, space=False) 
 
