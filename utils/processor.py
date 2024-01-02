@@ -18,7 +18,7 @@ class Processor():
 
         ## 0. 根据最新batch设置dataloader
         if self.dataset.datas['loader']: self.dataloader = self.dataset.datas['loader']
-        else: self.dataloader = self.dataset.get_dataloader(args.train['batch_size'], shuffle=dataset.shuffle)
+        else: self.dataloader = self.dataset.get_dataloader(args.train['batch_size'])
         self.log_step_rate = args.train['log_step_rate']*1
 
         ## 记录运行状态
@@ -154,7 +154,7 @@ class Processor():
 
         # load checkpoint
         if self.args.train['inference']: # 
-            checkpoint = torch.load(self.save_path+f'model.state') # torch.load(f"/home/jzq/lap_{self.args.train['seed']}.state") 
+            checkpoint = torch.load(self.save_path+f"{args.model['backbone']}_model.state") # torch.load(f"/home/jzq/lap_{self.args.train['seed']}.state") 
             self.model.load_state_dict(checkpoint['net'])
             self.best_result = checkpoint['result']
             # self.optimizer.load_state_dict(checkpoint['optimizer'])
@@ -220,8 +220,8 @@ class Processor():
                     self.logger_process.warning("update: {}".format(json.dumps(score)))
                 self.logger_metric.info(f"{stage}_eval: " + json.dumps(score))
 
-                if epoch == 4:
-                    print('check')
+                if epoch == 24:
+                    print('k')
                 # 3. 是否需要保存 checkpoint
                 if args.train['save_model']:  
                     # torch.save(self.model, self.save_path)
@@ -234,7 +234,7 @@ class Processor():
                     }
                     # torch.save(state, self.save_path+f'{score[self.metrics[0]]}.state')
                     # torch.save(state, f"/home/jzq/lap_{self.args.train['seed']}.state")
-                    torch.save(state, self.save_path+f'model.state')
+                    torch.save(state, self.save_path+f"{args.model['backbone']}_model.state")
 
                 # 4. 看看在测试集上的效果
                 if args.train['do_test']:
@@ -300,9 +300,6 @@ class Processor():
         # 1. 长期未更新了，增加评价次数
         early_threshold = epoch - self.best_result['epoch']
         if early_threshold >= args.train['early_stop']:
-            return True
-        
-        if self.best_result['valid'][self.metrics[0]] < 0.28:
             return True
 
         # self.log_step_rate = (self.params.log_step_rate+early_threshold)/1.3 # for absa

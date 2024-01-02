@@ -107,6 +107,7 @@ def init_weight(model, method='xavier_uniform_'):
 def get_scheduler(args, optimizer, iter_total, method=None):
     scheduler = None
     if method is None: method = args.model['optim_sched'][-1]
+    if method is None: return None
 
     warmup_ratio = args.train['warmup_ratio']
     if 'linear' in method:

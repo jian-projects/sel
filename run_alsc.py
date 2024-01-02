@@ -61,7 +61,8 @@ def run(args):
             'stop':    result['epoch'],
 
             'tv_mf1':  result['valid']['macro_f1'],
-            'te_mf1':  result['test']['macro_f1'],
+            'tv_acc':  result['valid']['accuracy'],
+            # 'te_mf1':  result['test']['macro_f1'],
         },
     }
     return record
@@ -105,7 +106,7 @@ if __name__ == '__main__':
     args.train['wandb'] = False
     args.train['show'] = 1
     
-    seeds = [2024+i for i in range(10)]
+    seeds = [2024+i for i in range(5)]
     ## Cycle Training
     if seeds: # 按指定 seed 执行
         recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"

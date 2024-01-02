@@ -22,6 +22,7 @@ def get_model(args, model_name=None):
     ## 非框架模型
     else:
         if 'plm' in model_name:  from models.absa.PLM_ABSA import import_model
+        if 'memnet' in model_name:  from models.absa.MemNet import import_model
 
         model, dataset = import_model(args)
         init_weight(model)
@@ -61,7 +62,8 @@ def run(args):
             'stop':    result['epoch'],
 
             'tv_mf1':  result['valid']['macro_f1'],
-            'te_mf1':  result['test']['macro_f1'],
+            'tv_acc':  result['valid']['accuracy'],
+            # 'te_mf1':  result['test']['macro_f1'],
         },
     }
     return record
@@ -85,35 +87,52 @@ if __name__ == '__main__':
         aclt: EMNLP 2021 (Bert_Based)
         cscl: our sota
     """
-    args = config(tasks=['absa','twi'], models=['seel_absa', 'plm'])
-    # args = config(tasks=['absa','lap'], models=['memnet', None])
+    args = config(tasks=['absa','twi'], models=['seel_absa', 'memnet'])
+    # args = config(tasks=['absa','rest'], models=['memnet', None])
 
     ## Parameters Settings
     args.model['scale'] = 'base'
     
-    args.train['epochs'] = 15
-    args.train['early_stop'] = 6
-    args.train['batch_size'] = 32
+    args.train['epochs'] = 64
+    args.train['early_stop'] = 5
+    args.train['batch_size'] = 64
     args.train['save_model'] = False
-    args.train['log_step_rate'] = 2.0
-    args.train['learning_rate'] = 3e-5
-    args.train['learning_rate_pre'] = 3e-5
+    args.train['log_step_rate'] = 4.0
+    args.train['learning_rate'] = 0.01
+    args.train['learning_rate_pre'] = 0.01
 
     args.model['drop_rate'] = 0.3
     args.train['do_test'] = 0
-    args.train['inference'] = 0
+    args.train['inference'] = 1
     args.train['wandb'] = False
-    args.train['show'] = 1
+    args.train['show'] = 0
     
-    seeds = [50+i for i in range(100)]
-    seeds = []
+    seeds = [2024+i for i in range(5)]
     ## Cycle Training
-    recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"
-    record_show = JsonFile(recoed_path, mode_w='a', delete=True)
-    for seed in seeds:
-        args.train['seed'] = seed
-        args.train['seed_change'] = False
+    if seeds: # 按指定 seed 执行
+        recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"
+        record_show = JsonFile(recoed_path, mode_w='a', delete=True)
+        for seed in seeds:
+            args.train['seed'] = seed
+            args.train['seed_change'] = False
 
-        args.model['scl'], args.model['seel'] = 0, 0
-        record = run(args)
-        record_show.write(record, space=False) 
+            args.model['scl'], args.model['seel'] = 0, 0
+            record = run(args)
+            record_show.write(record, space=False) 
+
+            args.model['scl'], args.model['seel'] = 1, 0
+            record = run(args)
+            record_show.write(record, space=False) 
+
+            args.model['scl'], args.model['seel'] = 1, 1
+            record = run(args)
+            record_show.write(record, space=False) 
+
+    else: # 随机 seed 执行       
+        recoed_path = f"{args.file['record']}{args.model['name']}_search.jsonl"
+        record_show = JsonFile(recoed_path, mode_w='a', delete=True)
+        for c in range(100):
+            args.train['seed'] = random.randint(1000,9999)+c
+            args.train['seed_change'] = False
+            record = run(args)
+            record_show.write(record, space=False)
