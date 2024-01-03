@@ -122,6 +122,12 @@ def get_scheduler(args, optimizer, iter_total, method=None):
             num_warmup_steps=warmup_ratio*iter_total, 
             num_training_steps=iter_total
         )
+    if 'step' in method:
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=40,
+            gamma=0.2
+        )
 
     return scheduler
 

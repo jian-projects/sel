@@ -43,7 +43,7 @@ class MyDataset(Dataset):
 def config_for_model(args):
     # args.model['optim_sched'] = ['AdamW_', 'cosine']
     # args.model['optim_sched'] = ['AdamW_', 'linear']
-    args.model['optim_sched'] = ['SGD', None]
+    args.model['optim_sched'] = ['SGD', 'step']
 
     return args
 
@@ -54,7 +54,7 @@ def import_model(args):
     set_rng_seed(args.train['seed'])
 
     ## 2. 导入数据
-    split = 0.2
+    split = 1.0
     data_dir = args.file['data_dir'] + f"{args.train['tasks'][1]}/"
     data_path = data_dir + f"dataset_{split}.pt"
     if os.path.exists(data_path):
