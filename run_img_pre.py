@@ -100,32 +100,14 @@ if __name__ == '__main__':
     args.train['wandb'] = False
     args.train['show'] = 1
 
-    seeds = [2024 + i for i in range(10)]
+    seeds = [0 + i for i in range(100)]
     ## Cycle Training
-    if seeds:  # 按指定 seed 执行
-        recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"
-        record_show = JsonFile(recoed_path, mode_w='a', delete=True)
-        for seed in seeds:
-            args.train['seed'] = seed
-            args.train['seed_change'] = False
+    recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"
+    record_show = JsonFile(recoed_path, mode_w='a', delete=True)
+    for seed in seeds:
+        args.train['seed'] = seed
+        args.train['seed_change'] = False
 
-            args.model['scl'], args.model['seel'] = 0, 0
-            record = run(args)
-            record_show.write(record, space=False)
-
-            args.model['scl'], args.model['seel'] = 1, 0
-            record = run(args)
-            record_show.write(record, space=False)
-
-            args.model['scl'], args.model['seel'] = 1, 1
-            record = run(args)
-            record_show.write(record, space=False)
-
-    else:  # 随机 seed 执行
-        recoed_path = f"{args.file['record']}{args.model['name']}_search.jsonl"
-        record_show = JsonFile(recoed_path, mode_w='a', delete=True)
-        for c in range(100):
-            args.train['seed'] = random.randint(1000, 9999) + c
-            args.train['seed_change'] = False
-            record = run(args)
-            record_show.write(record, space=False)
+        args.model['scl'], args.model['seel'] = 0, 0
+        record = run(args)
+        record_show.write(record, space=False)
