@@ -86,13 +86,13 @@ if __name__ == '__main__':
     ## Parameters Settings
     args.model['scale'] = 'base'
     
-    args.train['epochs'] = 10
-    args.train['early_stop'] = 10
+    args.train['epochs'] = 200
+    args.train['early_stop'] = 41
     args.train['batch_size'] = 128
     args.train['save_model'] = False
-    args.train['log_step_rate'] = 4.0
-    args.train['learning_rate'] = 1e-3
-    args.train['learning_rate_pre'] = 1e-3
+    args.train['log_step_rate'] = 2.0
+    args.train['learning_rate'] = 1e-1
+    args.train['learning_rate_pre'] = 1e-1
 
     args.model['drop_rate'] = 0.3
     args.train['do_test'] = 0

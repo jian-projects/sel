@@ -22,7 +22,7 @@ class Processor():
         self.log_step_rate = args.train['log_step_rate']*1
 
         ## 记录运行状态
-        self.save_path = f"{args.file['save_dir']}/{args.model['name']}/"
+        self.save_path = f"{args.file['save_dir']}/"
         if not os.path.exists(self.save_path): 
             os.makedirs(self.save_path)
 
@@ -98,9 +98,8 @@ class Processor():
         #     # self.dataloader = dataset.datas['dataloader']dataset
 
     def model_calculate(self, batch, stage):
-        if not isinstance(batch['input_ids'], list):
-            for key, val in batch.items(): 
-                batch[key] = val.to(self.args.train['device'])
+        for key, val in batch.items(): 
+            batch[key] = val.to(self.args.train['device'])
         outs = self.model(batch, stage) # 模型计算
 
         return outs
@@ -110,6 +109,13 @@ class Processor():
 
         log_step = int(len(self.dataloader['train']) / self.log_step_rate)
         model, args = self.model, self.args
+
+        if args.train['tasks'][0] == 'img':
+            if epoch + 1 == 40 or epoch + 1 == 80 or epoch + 1 == 120:
+                print(f'learning rate:{self.optimizer.param_groups[0]["lr"] * 0.2}')
+                for param_group in self.optimizer.param_groups:
+                    param_group['lr'] *= 0.2
+
         self.epoch_deal(epoch=epoch) # epoch开始前/后进行一些处理
         loss_epoch, results_epoch = [], []# 没有按 index 顺序
         torch.cuda.empty_cache()

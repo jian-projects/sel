@@ -44,20 +44,20 @@ def run(args):
     processor = Processor(args, model, dataset)
     result = processor._train()
 
-    def get_features(pro, stage='test'):
-        for bi, batch in enumerate(pro.dataloader[stage]):
-            pro.model.eval()
-            with torch.no_grad():
-                outs = pro.model_calculate(batch, stage) 
+    # def get_features(pro, stage='test'):
+    #     for bi, batch in enumerate(pro.dataloader[stage]):
+    #         pro.model.eval()
+    #         with torch.no_grad():
+    #             outs = pro.model_calculate(batch, stage) 
             
-            for i, idx in enumerate(batch['idx']):
-                pro.dataset.datas['data'][stage].samples[idx]['fea'] = outs['cls'][i]
+    #         for i, idx in enumerate(batch['idx']):
+    #             pro.dataset.datas['data'][stage].samples[idx]['fea'] = outs['cls'][i]
             
-        return pro.dataset.datas['data'][stage].samples
-    samples = get_features(processor, 'train')
-    torch.save(samples, f"./ce_1_scl_{args.model['scl']}_seel_{args.model['seel']}.pt")
+    #     return pro.dataset.datas['data'][stage].samples
+    # samples = get_features(processor, 'train')
+    # torch.save(samples, f"./ce_1_scl_{args.model['scl']}_seel_{args.model['seel']}.pt")
     
-    if 'break' in result: return None
+    # if 'break' in result: return None
 
     torch.save(model.metrics, f"./saves/ce_1_scl_{args.model['scl']}_seel_{args.model['seel']}_seed_{args.train['seed']}.pt")
     ## 2. 输出统计结果
