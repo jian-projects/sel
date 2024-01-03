@@ -164,6 +164,7 @@ class SEEL(nn.Module):
         record['acc_bz'].append(self.metrics.accuracy_score(labels, preds))
 
         return {
+            'cls': features.detach().cpu().numpy(),
             'loss':   loss,
             'loss_ce': loss_ce,
             'logits': logits,

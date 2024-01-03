@@ -43,6 +43,20 @@ def run(args):
     dataset.lab_range = list(range(dataset.n_class))
     processor = Processor(args, model, dataset)
     result = processor._train()
+
+    def get_features(pro, stage='test'):
+        for bi, batch in enumerate(pro.dataloader[stage]):
+            pro.model.eval()
+            with torch.no_grad():
+                outs = pro.model_calculate(batch, stage) 
+            
+            for i, idx in enumerate(batch['idx']):
+                pro.dataset.datas['data'][stage].samples[idx]['fea'] = outs['cls'][i]
+            
+        return pro.dataset.datas['data'][stage].samples
+    samples = get_features(processor, 'train')
+    torch.save(samples, f"./ce_1_scl_{args.model['scl']}_seel_{args.model['seel']}.pt")
+    
     if 'break' in result: return None
 
     torch.save(model.metrics, f"./saves/ce_1_scl_{args.model['scl']}_seel_{args.model['seel']}_seed_{args.train['seed']}.pt")
@@ -107,6 +121,7 @@ if __name__ == '__main__':
     args.train['show'] = 1
     
     seeds = [2024+i for i in range(5)]
+    seeds = [2028]
     ## Cycle Training
     if seeds: # 按指定 seed 执行
         recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"

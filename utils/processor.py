@@ -220,7 +220,7 @@ class Processor():
                     self.logger_process.warning("update: {}".format(json.dumps(score)))
                 self.logger_metric.info(f"{stage}_eval: " + json.dumps(score))
 
-                if epoch == 24:
+                if epoch == 9:
                     print('k')
                 # 3. 是否需要保存 checkpoint
                 if args.train['save_model']:  
