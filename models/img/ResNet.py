@@ -1,12 +1,7 @@
-import torch, os, copy, fitlog, math, json
+import torch, os
 import torch.nn as nn
-import torch.nn.functional as F
-from tqdm import tqdm
 from torch.nn import CrossEntropyLoss
-from torch.nn.utils.rnn import pad_sequence
-from transformers import AutoModel, AutoTokenizer
 from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision import models
 from utils.processor_utils import set_rng_seed
 from models.img.resnet_basic import resnet50
 
@@ -43,7 +38,7 @@ class MyDataset(Dataset):
 def config_for_model(args):
     # args.model['optim_sched'] = ['AdamW_', 'cosine']
     # args.model['optim_sched'] = ['AdamW_', 'linear']
-    args.model['optim_sched'] = ['SGD', 'step']
+    args.model['optim_sched'] = ['SGD', None]
 
     return args
 
@@ -54,7 +49,7 @@ def import_model(args):
     set_rng_seed(args.train['seed'])
 
     ## 2. 导入数据
-    split = 1.0
+    split = 0.2
     data_dir = args.file['data_dir'] + f"{args.train['tasks'][1]}/"
     data_path = data_dir + f"dataset_{split}.pt"
     if os.path.exists(data_path):

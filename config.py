@@ -7,7 +7,7 @@ PLM_DIR = '/home/Pretrained_Models/'
 DATA_DIR = './datasets/'
 # SAVE_DIR = './checkpoints/'
 SAVE_DIR = '/home/Pretrained_Models/seel/'
-SAVE_DIR = 'checkpoints/img/'
+# SAVE_DIR = 'checkpoints/img/'
 
 def log_show(desc, args=None):
     if 'load' in desc: ## 0. 加载参数显式

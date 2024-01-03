@@ -87,7 +87,7 @@ if __name__ == '__main__':
     args.model['scale'] = 'base'
     
     args.train['epochs'] = 200
-    args.train['early_stop'] = 41
+    args.train['early_stop'] = 40
     args.train['batch_size'] = 128
     args.train['save_model'] = False
     args.train['log_step_rate'] = 2.0
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     args.train['wandb'] = False
     args.train['show'] = 1
 
-    seeds = [0 + i for i in range(100)]
+    seeds = [2024 + i for i in range(100)]
     ## Cycle Training
     recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"
     record_show = JsonFile(recoed_path, mode_w='a', delete=True)
