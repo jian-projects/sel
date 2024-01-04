@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from utils.processor_utils import set_rng_seed
 from models.img.resnet_basic import resnet50
 
+
 class MyDataset(Dataset):
     def __init__(self) -> None:
         super().__init__()
@@ -19,9 +20,10 @@ class MyDataset(Dataset):
 
         dataloader = {}
         for desc, data_embed in self.datas['data'].items():
-            if only is not None and desc!=only: continue
-            dataloader[desc] = DataLoader(dataset=data_embed, batch_size=batch_size, shuffle=shuffle[desc], collate_fn=collate_fn, num_workers=8)
-            
+            if only is not None and desc != only: continue
+            dataloader[desc] = DataLoader(dataset=data_embed, batch_size=batch_size, shuffle=shuffle[desc],
+                                          collate_fn=collate_fn, num_workers=8)
+
         if only is None and 'valid' not in dataloader: dataloader['valid'] = dataloader['test']
         return dataloader
 
@@ -38,7 +40,7 @@ class MyDataset(Dataset):
 def config_for_model(args):
     # args.model['optim_sched'] = ['AdamW_', 'cosine']
     # args.model['optim_sched'] = ['AdamW_', 'linear']
-    args.model['optim_sched'] = ['SGD', None]
+    args.model['optim_sched'] = ['SGD', None]  # 'Adam', 'linear']
 
     return args
 
@@ -49,21 +51,21 @@ def import_model(args):
     set_rng_seed(args.train['seed'])
 
     ## 2. 导入数据
-    split = 0.2
+    split = args.train['split']
     data_dir = args.file['data_dir'] + f"{args.train['tasks'][1]}/"
     data_path = data_dir + f"dataset_{split}.pt"
     if os.path.exists(data_path):
         dataset = torch.load(data_path)
     else:
         dataset = MyDataset()
-        from data_loader import get_specific_dataset
+        from datasets.img.data_loader import get_specific_dataset
         datas = get_specific_dataset(args, data_name=args.train['tasks'][-1])
         dataset.datas['data'] = {'train': datas['train'], 'test': datas['test']}
 
-        dataset.name  =args.train['tasks'][-1]
+        dataset.name = args.train['tasks'][-1]
         dataset.task, dataset.n_class = 'cls', datas['n_class']
-        if split:
-            half_size = int(len(datas['train'])*split) # 0.2 0.4 0.6 0.8 1.0
+        if split < 1:
+            half_size = int(len(datas['train']) * split)  # 0.2 0.4 0.6 0.8 1.0
             datas['train'], _ = random_split(datas['train'], [half_size, len(datas['train']) - half_size])
 
         torch.save(dataset, data_path)

@@ -38,7 +38,7 @@ def run(args):
     dataset.lab_range = list(range(dataset.n_class))
     processor = Processor(args, model, dataset)
     result = processor._train()
-
+    os.makedirs(f"./saves/", exist_ok=True)
     torch.save(model.metrics, f"./saves/ce_1_scl_{args.model['scl']}_seel_{args.model['seel']}_seed_{args.train['seed']}.pt")
     ## 2. 输出统计结果
     record = {
@@ -86,23 +86,26 @@ if __name__ == '__main__':
     ## Parameters Settings
     args.model['scale'] = 'base'
     
-    args.train['epochs'] = 10
-    args.train['early_stop'] = 10
-    args.train['batch_size'] = 128
+    args.train['epochs'] = 15
+    args.train['early_stop'] = 4
+    args.train['batch_size'] = 256
     args.train['save_model'] = False
     args.train['log_step_rate'] = 4.0
-    args.train['learning_rate'] = 1e-3
-    args.train['learning_rate_pre'] = 1e-3
+    args.train['learning_rate'] = 8e-4
+    args.train['learning_rate_pre'] = 8e-4
+
+    args.train['split'] = 1.0
 
     args.model['drop_rate'] = 0.3
     args.train['do_test'] = 0
-    args.train['inference'] = 0
+    args.train['inference'] = 1
     args.train['wandb'] = False
     args.train['show'] = 1
 
     seeds = [2024 + i for i in range(10)]
     ## Cycle Training
     if seeds:  # 按指定 seed 执行
+        os.makedirs(f"{args.file['record']}",exist_ok=True)
         recoed_path = f"{args.file['record']}{args.model['name']}_best.jsonl"
         record_show = JsonFile(recoed_path, mode_w='a', delete=True)
         for seed in seeds:
@@ -122,6 +125,7 @@ if __name__ == '__main__':
             record_show.write(record, space=False)
 
     else:  # 随机 seed 执行
+        os.makedirs(f"{args.file['record']}", exist_ok=True)
         recoed_path = f"{args.file['record']}{args.model['name']}_search.jsonl"
         record_show = JsonFile(recoed_path, mode_w='a', delete=True)
         for c in range(100):
