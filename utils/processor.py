@@ -5,10 +5,11 @@ from tqdm import tqdm
 from utils.processor_utils import *
 
 logging.basicConfig(
-        format='%(asctime)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
-        level=logging.INFO,
-    )
+    format='%(asctime)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    level=logging.INFO,
+)
+
 
 class Processor():
     def __init__(self, args, model, dataset) -> None:
@@ -17,47 +18,48 @@ class Processor():
         self.model = model.to(args.train['device'])
 
         ## 0. 根据最新batch设置dataloader
-        if self.dataset.datas['loader']: self.dataloader = self.dataset.datas['loader']
-        else: self.dataloader = self.dataset.get_dataloader(args.train['batch_size'])
-        self.log_step_rate = args.train['log_step_rate']*1
+        if self.dataset.datas['loader']:
+            self.dataloader = self.dataset.datas['loader']
+        else:
+            self.dataloader = self.dataset.get_dataloader(args.train['batch_size'])
+        self.log_step_rate = args.train['log_step_rate'] * 1
 
         ## 记录运行状态
         self.save_path = f"{args.file['save_dir']}/"
-        if not os.path.exists(self.save_path): 
+        if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
 
-        self.logger_loss, self.logger_metric, self.logger_process = args.logger['loss'], args.logger['metric'], args.logger['process']
+        self.logger_loss, self.logger_metric, self.logger_process = args.logger['loss'], args.logger['metric'], \
+            args.logger['process']
         self.metrics, self.log_show, self.global_step = dataset.metrics, args.train['show'], 1
 
         self.best_result = {
-            'epoch': 0, 'times': 0, 'loss':  0,
+            'epoch': 0, 'times': 0, 'loss': 0,
             # metrics
             'train': {item: 0 for item in self.metrics},
             'valid': {item: 0 for item in self.metrics},
-            'test':  {item: 0 for item in self.metrics},      
+            'test': {item: 0 for item in self.metrics},
         }
-        #if 'fw' not in args.params_model.name[0]: args.params_model.baseline = 1
+        # if 'fw' not in args.params_model.name[0]: args.params_model.baseline = 1
 
     def epoch_deal(self, epoch=None, inputs=None, stage='init'):
         if stage == 'stop':
-            if 'attack' in self.args.model and self.args.model['attack'] : ## ral attack
+            if 'attack' in self.args.model and self.args.model['attack']:  ## ral attack
                 # 统计聚类中心，判断聚类半径
                 cluster_samps = {'cls': [], 'lab': []}
                 for bi, batch in enumerate(self.dataloader['train']):
                     self.model.eval()
                     with torch.no_grad():
-                        outs = self.model_calculate(batch, 'test') 
+                        outs = self.model_calculate(batch, 'test')
                         cluster_samps['cls'].extend(outs['clss'].detach().cpu().numpy())
                         cluster_samps['lab'].extend(outs['labels'].cpu().numpy())
-                
+
                 cluster_result = k_means(cluster_samps['cls'], n_clusters=self.dataset.n_class)
 
-
-                radii = [] # 计算每个聚类的半径
+                radii = []  # 计算每个聚类的半径
                 for i, center in enumerate(cluster_result.cluster_centers_):
-                    index = [li for li,l in enumerate(cluster_result.labels_) if l==i]
+                    index = [li for li, l in enumerate(cluster_result.labels_) if l == i]
                     idx_lab = [cluster_samps['lab'][idx] for idx in index]
-
 
                     dists = np.linalg.norm(data - center, axis=1)  # 计算每个点到中心的距离
                     radius = np.max(dists)  # 取最大距离作为半径
@@ -65,16 +67,12 @@ class Processor():
 
                 print(radii)
 
-
                 labels, attacks = [], []
                 for rec in inputs:
                     labels.extend(rec['labels'].cpu().numpy())
                     attacks.extend(rec['attack'])
-                errors = [l!=a for l, a in zip(labels, attacks) if a!=-1]
-                self.logger_process.warning(f"attack: {round(sum(errors)/len(errors), 4)}")
-
-
-                
+                errors = [l != a for l, a in zip(labels, attacks) if a != -1]
+                self.logger_process.warning(f"attack: {round(sum(errors) / len(errors), 4)}")
 
         # model_name = self.args.model['name']
         # if 'rcl' in model_name[0]:
@@ -98,40 +96,41 @@ class Processor():
         #     # self.dataloader = dataset.datas['dataloader']dataset
 
     def model_calculate(self, batch, stage):
-        for key, val in batch.items(): 
+        for key, val in batch.items():
             batch[key] = val.to(self.args.train['device'])
-        outs = self.model(batch, stage) # 模型计算
+        outs = self.model(batch, stage)  # 模型计算
 
         return outs
 
     def train_epoch(self, epoch, stage='train'):
-        #if self.model.params.about == 'efcl': return self.train_epoch_(epoch, stage)
+        # if self.model.params.about == 'efcl': return self.train_epoch_(epoch, stage)
 
         log_step = int(len(self.dataloader['train']) / self.log_step_rate)
         model, args = self.model, self.args
+        if self.scheduler is None:
+            if args.train['tasks'][0] == 'img':
+                if epoch in [30, 60, 90]:  # TODO: change back to below
+                    # [10, 20, 30] | [20, 40, 60] | [30, 60, 90]
+                    print(f'learning rate:{self.optimizer.param_groups[0]["lr"] * 0.2}')
+                    for param_group in self.optimizer.param_groups:
+                        param_group['lr'] *= 0.2
 
-        if args.train['tasks'][0] == 'img':
-            if epoch + 1 == 40 or epoch + 1 == 80 or epoch + 1 == 120:
-                print(f'learning rate:{self.optimizer.param_groups[0]["lr"] * 0.2}')
-                for param_group in self.optimizer.param_groups:
-                    param_group['lr'] *= 0.2
-
-        self.epoch_deal(epoch=epoch) # epoch开始前/后进行一些处理
-        loss_epoch, results_epoch = [], []# 没有按 index 顺序
+        self.epoch_deal(epoch=epoch)  # epoch开始前/后进行一些处理
+        loss_epoch, results_epoch = [], []  # 没有按 index 顺序
         torch.cuda.empty_cache()
-        #for batch in tqdm(self.dataloader['train'], smoothing=0.05):
+        # for batch in tqdm(self.dataloader['train'], smoothing=0.05):
         for bi, batch in enumerate(self.dataloader['train']):
             # 数据计算
-            model.train()      
-            outs = self.model_calculate(batch, stage)    
-            
+            model.train()
+            outs = self.model_calculate(batch, stage)
+
             # 误差传播
             loss = outs["loss"]
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.train['max_grad_norm'])
             self.optimizer.step()
-            if self.scheduler is not None: self.scheduler.step() 
-            self.optimizer.zero_grad()        
+            if self.scheduler is not None: self.scheduler.step()
+            self.optimizer.zero_grad()
 
             # 结果统计  
             self.global_step += 1
@@ -141,7 +140,7 @@ class Processor():
             if self.global_step % log_step == 0:
                 rec_valid = self._evaluate(stage='valid')
                 self.update_metric(epoch, rec_valid, stage='valid')
-        
+
             # if args.train['wandb'] and self.global_step % log_step//3 == 0:
             #     wandb.log({
             #         "train_acc": round(accuracy_score(labels, preds), 4), 
@@ -149,18 +148,19 @@ class Processor():
             #         "valid_acc": self.best_result['valid']['accuracy']
             #         })
 
-        self.epoch_deal(epoch=epoch, inputs=results_epoch) # epoch开始前/后进行一些处理
+        self.epoch_deal(epoch=epoch, inputs=results_epoch)  # epoch开始前/后进行一些处理
         return results_epoch
 
     def loadState(self, iter=0, bl_rate=0.9):
         start_e, args, model = 0, self.args, self.model
-        iter_total = int(len(self.dataloader['train'])*args.train['epochs']) - iter
+        iter_total = int(len(self.dataloader['train']) * args.train['epochs']) - iter
         self.optimizer = get_optimizer(args, model)
         self.scheduler = get_scheduler(args, self.optimizer, iter_total)
 
         # load checkpoint
-        if self.args.train['inference']: # 
-            checkpoint = torch.load(self.save_path+f"{args.model['backbone']}_model.state") # torch.load(f"/home/jzq/lap_{self.args.train['seed']}.state") 
+        if self.args.train['inference']:  #
+            checkpoint = torch.load(
+                self.save_path + f"{args.model['backbone']}_{args.train['split']}_model.state")  # torch.load(f"/home/jzq/lap_{self.args.train['seed']}.state")
             self.model.load_state_dict(checkpoint['net'])
             self.best_result = checkpoint['result']
             # self.optimizer.load_state_dict(checkpoint['optimizer'])
@@ -171,47 +171,47 @@ class Processor():
     def _train(self):
         ## Initial Model and Processor
         start_e, args = self.loadState()
-        self.model.metrics.on_train_start(self) # 开始训练前, 算算初始loss
+        self.model.metrics.on_train_start(self)  # 开始训练前, 算算初始loss
 
         ## Training epochs
         epochs = args.train['epochs']
         self.tqdm_epochs = tqdm(total=epochs, position=0)
-        self.train_desc(epoch=-1) # initialize process bar
+        self.train_desc(epoch=-1)  # initialize process bar
         for epoch in range(start_e, epochs):
             s_time = time.time()
-            output_epoch = self.train_epoch(epoch) # train one epoch
-            
+            output_epoch = self.train_epoch(epoch)  # train one epoch
+
             rec_train = get_metric(output_epoch, self.dataset)
-            rec_train['time'] = round(time.time()-s_time, 3)
+            rec_train['time'] = round(time.time() - s_time, 3)
             self.update_metric(epoch, rec_train, stage='train')
             torch.cuda.empty_cache()
-            self.train_desc(epoch, rec_train) # update process bar
+            self.train_desc(epoch, rec_train)  # update process bar
 
-            self.model.metrics.on_train_epoch_end(self) # 每个epoch完后干点事
-            if self.train_stop(epoch): break # is early stop ?
-            
+            self.model.metrics.on_train_epoch_end(self)  # 每个epoch完后干点事
+            if self.train_stop(epoch): break  # is early stop ?
+
         self.tqdm_epochs.close()
-        self.epoch_deal(epoch=epoch, stage='stop') # 训练停止, 是否做些处理
+        self.epoch_deal(epoch=epoch, stage='stop')  # 训练停止, 是否做些处理
         return self.best_result
 
     def _evaluate(self, stage='test'):
         ## 显示当前状态
         # if self.log_show: 
         #     self.logger_process.warning("***** evaluating_on_{}, waiting *****".format(stage))
-        
+
         ## 计算预测结果
         results_epoch = []
         for bi, batch in enumerate(self.dataloader[stage]):
             self.model.eval()
             with torch.no_grad():
-                outs = self.model_calculate(batch, stage) 
+                outs = self.model_calculate(batch, stage)
                 results_epoch.append(outs)
-        
+
         ## 计算评价指标
         score = get_metric(results_epoch, self.dataset)
 
         return score
-    
+
     def update_metric(self, epoch, score, stage='valid'):
         args = self.args
         ## 按valid选择最佳模型
@@ -222,14 +222,14 @@ class Processor():
                 self.best_result[stage].update(score)
 
                 # 2. logger 过程写入
-                if self.log_show: 
+                if self.log_show:
                     self.logger_process.warning("update: {}".format(json.dumps(score)))
                 self.logger_metric.info(f"{stage}_eval: " + json.dumps(score))
 
                 if epoch == 9:
                     print('k')
                 # 3. 是否需要保存 checkpoint
-                if args.train['save_model']:  
+                if args.train['save_model']:
                     # torch.save(self.model, self.save_path)
                     state = {
                         'net': self.model.state_dict(),
@@ -240,20 +240,19 @@ class Processor():
                     }
                     # torch.save(state, self.save_path+f'{score[self.metrics[0]]}.state')
                     # torch.save(state, f"/home/jzq/lap_{self.args.train['seed']}.state")
-                    torch.save(state, self.save_path+f"{args.model['backbone']}_model.state")
+                    torch.save(state, self.save_path + f"{args.model['backbone']}_{args.train['split']}_model.state")
 
                 # 4. 看看在测试集上的效果
                 if args.train['do_test']:
                     rec_test = self._evaluate(stage='test')
                     self.update_metric(epoch, rec_test, stage='test')
 
-
         ## 记录test的结果
         if 'test' in stage:
             # for metric in self.metrics: self.best_result[stage][metric] = score[metric]
             self.best_result[stage].update(score)
 
-            if self.log_show: 
+            if self.log_show:
                 self.logger_process.warning("test: {}".format(json.dumps(score)))
             self.logger_metric.info('test_test_test: ' + json.dumps(score))
 
@@ -264,23 +263,23 @@ class Processor():
             # for metric in self.metrics: self.best_result[stage][metric] = score[metric]
             self.best_result[stage].update(score)
 
-            if self.log_show: 
+            if self.log_show:
                 self.logger_process.warning(f"train: {json.dumps(score)}")
             self.logger_metric.info('train: ' + json.dumps(score))
             self.logger_loss.info('train_loss: ' + str(score['loss']))
-
 
     def train_desc(self, epoch, outs=None):
         args, metrics, results = self.args, self.metrics, self.best_result
 
         epochs, model_name, data_name = args.train['epochs'], args.model['name'], self.dataset.name[-1]
-        best_train, best_valid, best_test = results['train'][metrics[0]], results['valid'][metrics[0]], results['test'][metrics[0]]
+        best_train, best_valid, best_test = results['train'][metrics[0]], results['valid'][metrics[0]], results['test'][
+            metrics[0]]
         cur_total_loss = 0 if outs is None else outs['loss']
         consume_time = 0 if outs is None else outs['time']
         desc = f"epoch {epoch}/{epochs} ( {model_name} => {data_name}: {best_train}/{best_valid}/{best_test}, loss: {cur_total_loss}, time: {consume_time} )"
 
         self.tqdm_epochs.set_description(desc)
-        if epoch>=0: self.tqdm_epochs.update()
+        if epoch >= 0: self.tqdm_epochs.update()
 
     def train_stop(self, epoch=None):
         args = self.args
